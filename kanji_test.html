@@ -29,10 +29,16 @@
   .paid-yes{color:var(--green);font-weight:800;}
   .paid-no{color:var(--red);font-weight:800;}
   .unpaid-box{background:#fff0f0;border-radius:10px;padding:10px 12px;font-size:.82rem;color:#9a2a2a;margin-top:10px;}
-  .frow{display:flex;align-items:center;gap:10px;padding:11px 4px;border-bottom:1px solid var(--line);}
-  .frow .fname{font-weight:800;font-size:.98rem;min-width:88px;}
-  .frow .fdet{flex:1;font-size:.76rem;color:var(--muted);}
-  .frow .famt{font-weight:800;color:var(--orange);font-size:.92rem;white-space:nowrap;}
+  .fcard{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff;}
+  .fc-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
+  .fc-name{font-weight:800;font-size:1.05rem;}
+  .fc-people{font-size:.76rem;color:var(--muted);margin-bottom:6px;}
+  .fc-menu{background:var(--bg);border-radius:8px;padding:8px 10px;margin-bottom:8px;}
+  .fc-menu .fm-item{font-size:.92rem;font-weight:600;padding:2px 0;}
+  .fc-menu .fm-pres{font-size:.82rem;color:#a03060;padding-top:3px;border-top:1px dashed #e3c9d6;margin-top:4px;}
+  .fc-amt{font-size:.9rem;}
+  .fc-amt b{font-size:1.3rem;color:var(--orange);}
+  .fc-brk{font-size:.68rem;color:var(--muted);margin-left:6px;white-space:nowrap;}
   .pay-btn{min-width:64px;padding:9px 12px;border-radius:999px;font-weight:800;font-size:.86rem;cursor:pointer;border:2px solid;}
   .pay-btn.yes{background:#e9f8f0;border-color:var(--green);color:var(--green);}
   .pay-btn.no{background:#fff0f0;border-color:var(--red);color:var(--red);}
@@ -103,16 +109,21 @@ function render(k){
   if(!fam.length){document.getElementById("kFamilies").innerHTML='<div class="loading">まだ注文がありません。</div>';return;}
   const box=document.getElementById("kFamilies");box.innerHTML="";
   fam.forEach(f=>{
-    const items=(f.items||[]).map(it=>esc(it.menu)).join("・");
-    const pres=(f.present||0)>0?'＋🎁プレゼント'+(f.present||0).toLocaleString()+'円':'';
-    const row=document.createElement("div");row.className="frow";
-    row.innerHTML='<span class="fname">'+esc(f.name)+'</span>'
-      +'<span class="fdet">子'+f.child+'・大'+f.adult+'／'+items+pres+'</span>'
-      +'<span class="famt">'+(f.total||0).toLocaleString()+'円</span>'
-      +'<button class="pay-btn '+(f.paid?'yes':'no')+'">'+(f.paid?'済':'未')+'</button>';
-    const btn=row.querySelector(".pay-btn");
+    // メニューを名前ごとに個数集計（見やすく・集金ミス防止）
+    const agg={},order=[];
+    (f.items||[]).forEach(it=>{const m=esc(it.menu);if(!agg[m]){agg[m]=0;order.push(m);}agg[m]++;});
+    let menuHtml=order.length?order.map(m=>'<div class="fm-item">'+m+' ×'+agg[m]+'</div>').join(""):'<div class="fm-item" style="color:var(--muted)">（メニューなし）</div>';
+    if((f.present||0)>0)menuHtml+='<div class="fm-pres">🎁 プレゼント代 '+(f.present||0).toLocaleString()+'円（子ども'+f.child+'人）</div>';
+    const brk=(f.present||0)>0?'<span class="fc-brk">(ﾒﾆｭｰ'+(f.menuTotal||0).toLocaleString()+'＋ﾌﾟﾚ'+(f.present||0).toLocaleString()+')</span>':'';
+    const card=document.createElement("div");card.className="fcard";
+    card.innerHTML='<div class="fc-top"><span class="fc-name">'+esc(f.name)+'</span>'
+      +'<button class="pay-btn '+(f.paid?'yes':'no')+'">'+(f.paid?'済':'未')+'</button></div>'
+      +'<div class="fc-people">子ども '+f.child+'人・大人 '+f.adult+'人</div>'
+      +'<div class="fc-menu">'+menuHtml+'</div>'
+      +'<div class="fc-amt">合計 <b>'+(f.total||0).toLocaleString()+'円</b>'+brk+'</div>';
+    const btn=card.querySelector(".pay-btn");
     btn.onclick=()=>togglePaid(f.name,f.paid,btn);
-    box.appendChild(row);
+    box.appendChild(card);
   });
 }
 

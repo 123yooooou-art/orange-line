@@ -68,6 +68,17 @@
   .unpaid-box{background:#fff0f0;border-radius:10px;padding:10px 12px;font-size:.82rem;color:#9a2a2a;margin-top:10px;}
   .paid-yes{color:var(--green);font-weight:800;}
   .paid-no{color:var(--red);font-weight:800;}
+  /* 家庭別カード */
+  .fcard{border:1px solid var(--line);border-radius:12px;padding:12px 14px;margin-bottom:10px;background:#fff;}
+  .fc-top{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:6px;}
+  .fc-name{font-weight:800;font-size:1.05rem;}
+  .fc-people{font-size:.76rem;color:var(--muted);margin-bottom:6px;}
+  .fc-menu{background:var(--bg);border-radius:8px;padding:8px 10px;margin-bottom:8px;}
+  .fc-menu .fm-item{font-size:.92rem;font-weight:600;padding:2px 0;}
+  .fc-menu .fm-pres{font-size:.82rem;color:#a03060;padding-top:3px;border-top:1px dashed #e3c9d6;margin-top:4px;}
+  .fc-amt{font-size:.9rem;}
+  .fc-amt b{font-size:1.3rem;color:var(--orange);}
+  .fc-brk{font-size:.68rem;color:var(--muted);margin-left:6px;white-space:nowrap;}
 </style>
 </head>
 <body>
@@ -346,19 +357,22 @@ function renderKaikei(k){
     document.getElementById("kMenu").innerHTML=h;
   }else{document.getElementById("kMenu").innerHTML='<div class="loading">まだ注文がありません。</div>';}
 
-  // 家庭別 会計一覧
+  // 家庭別 会計一覧（カード型）
   const fam=k.families||[];
   if(fam.length){
-    let h='<table><thead><tr><th>名前</th><th>子</th><th>大</th><th>注文</th><th>合計</th><th>支払</th></tr></thead><tbody>';
+    let h='';
     fam.forEach(f=>{
-      const items=(f.items||[]).map(it=>esc(it.menu)).join("・");
-      const brk=(f.present||0)>0?'<div style="font-size:.62rem;font-weight:600;color:var(--muted)">ﾒﾆｭｰ'+(f.menuTotal||0).toLocaleString()+'+ﾌﾟﾚ'+(f.present||0).toLocaleString()+'</div>':'';
-      h+='<tr><td>'+esc(f.name)+'</td><td>'+f.child+'</td><td>'+f.adult+'</td>'
-        +'<td style="text-align:left;font-size:.78rem">'+items+'</td>'
-        +'<td class="amt">'+(f.total||0).toLocaleString()+brk+'</td>'
-        +'<td>'+(f.paid?'<span class="paid-yes">済</span>':'<span class="paid-no">未</span>')+'</td></tr>';
+      const agg={},order=[];
+      (f.items||[]).forEach(it=>{const m=esc(it.menu);if(!agg[m]){agg[m]=0;order.push(m);}agg[m]++;});
+      let menuHtml=order.length?order.map(m=>'<div class="fm-item">'+m+' ×'+agg[m]+'</div>').join(""):'<div class="fm-item" style="color:var(--muted)">（メニューなし）</div>';
+      if((f.present||0)>0)menuHtml+='<div class="fm-pres">🎁 プレゼント代 '+(f.present||0).toLocaleString()+'円（子ども'+f.child+'人）</div>';
+      const brk=(f.present||0)>0?'<span class="fc-brk">(ﾒﾆｭｰ'+(f.menuTotal||0).toLocaleString()+'＋ﾌﾟﾚ'+(f.present||0).toLocaleString()+')</span>':'';
+      h+='<div class="fcard"><div class="fc-top"><span class="fc-name">'+esc(f.name)+'</span>'
+        +'<span>'+(f.paid?'<span class="paid-yes">済</span>':'<span class="paid-no">未</span>')+'</span></div>'
+        +'<div class="fc-people">子ども '+f.child+'人・大人 '+f.adult+'人</div>'
+        +'<div class="fc-menu">'+menuHtml+'</div>'
+        +'<div class="fc-amt">合計 <b>'+(f.total||0).toLocaleString()+'円</b>'+brk+'</div></div>';
     });
-    h+='</tbody></table>';
     document.getElementById("kFamilies").innerHTML=h;
   }else{document.getElementById("kFamilies").innerHTML='<div class="loading">まだ注文がありません。</div>';}
 }

@@ -16,8 +16,9 @@
   header h1{margin:0;font-size:1.15rem;letter-spacing:.02em;}
   header p{margin:2px 0 0;font-size:.78rem;opacity:.92;}
   .tabbar{display:flex;background:#fff;border-bottom:1px solid var(--line);position:sticky;top:62px;z-index:9;}
-  .tab{flex:1;padding:13px 4px;text-align:center;font-size:.82rem;font-weight:700;color:var(--muted);
-    border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;}
+  .tab{flex:1;padding:10px 2px;text-align:center;font-size:.8rem;font-weight:700;color:var(--muted);
+    border:none;background:none;cursor:pointer;border-bottom:3px solid transparent;
+    display:flex;align-items:center;justify-content:center;line-height:1.18;min-height:48px;}
   .tab.active{color:var(--orange);border-bottom-color:var(--orange);}
   .wrap{max-width:680px;margin:0 auto;padding:16px;}
   .panel{display:none;}
@@ -36,7 +37,10 @@
   .chip{font-size:.9rem;padding:9px 13px;border-radius:999px;border:2px solid var(--line);background:#fff;color:var(--muted);cursor:pointer;}
   .chip.on{background:var(--orange-soft);border-color:var(--orange);color:var(--orange);font-weight:700;}
   .seg{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-  .seg-btn{padding:13px;font-size:.98rem;font-weight:700;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer;}
+  .seg-btn{padding:10px 6px;font-size:.98rem;font-weight:700;border:2px solid var(--line);border-radius:10px;background:#fff;color:var(--ink);cursor:pointer;
+    display:flex;flex-direction:column;align-items:center;justify-content:center;line-height:1.2;min-height:56px;}
+  .seg-btn .sg-mark{font-size:1.3rem;line-height:1;}
+  .seg-btn .sg-word{font-size:.78rem;}
   .seg-btn.on{background:var(--orange-soft);border-color:var(--orange);color:var(--orange);}
   .seg3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;}
   .submit{width:100%;margin-top:8px;padding:18px;font-size:1.12rem;font-weight:800;border:none;border-radius:12px;background:var(--orange);color:#fff;cursor:pointer;}
@@ -159,12 +163,12 @@
 </header>
 
 <div class="tabbar">
-  <button class="tab active" data-panel="input">成績入力</button>
-  <button class="tab" data-panel="check">入力データ確認</button>
-  <button class="tab" data-panel="awards">賞の確認</button>
-  <button class="tab" data-panel="ceremony">🏆 表彰</button>
-  <button class="tab" data-panel="stats">年度成績</button>
-  <button class="tab" data-panel="stamp">🏅 スタンプ</button>
+  <button class="tab active" data-panel="input">成績<br>入力</button>
+  <button class="tab" data-panel="check">入力<br>確認</button>
+  <button class="tab" data-panel="awards">賞の<br>確認</button>
+  <button class="tab" data-panel="ceremony">表彰</button>
+  <button class="tab" data-panel="stats">年度<br>成績</button>
+  <button class="tab" data-panel="stamp">スタ<br>ンプ</button>
 </div>
 
 <div class="wrap">
@@ -212,9 +216,9 @@
       <div class="field">
         <label>守備好プレー評価（任意）</label>
         <div class="seg3" id="segPlay">
-          <button class="seg-btn on" data-v="" type="button">なし</button>
-          <button class="seg-btn" data-v="○" type="button">○ good</button>
-          <button class="seg-btn" data-v="◎" type="button">◎ 大活躍</button>
+          <button class="seg-btn on" data-v="" type="button"><span class="sg-word">なし</span></button>
+          <button class="seg-btn" data-v="○" type="button"><span class="sg-mark">○</span><span class="sg-word">good</span></button>
+          <button class="seg-btn" data-v="◎" type="button"><span class="sg-mark">◎</span><span class="sg-word">大活躍</span></button>
         </div>
       </div>
 
@@ -588,9 +592,10 @@ function renderAwards(a){
   // 初めて記録
   h+='<div style="font-weight:800;margin:18px 0 8px;color:#1f9d63;">■ 初めて記録</div>';
   if(a.firsts&&a.firsts.length){
-    h+='<table><thead><tr><th>児童</th><th>初安打</th><th>初打点</th><th>初出塁</th><th>初得点</th></tr></thead><tbody>';
-    a.firsts.forEach(x=>{h+=`<tr><td>${x.child}</td><td style="font-size:.72rem">${x.firstHit||"-"}</td><td style="font-size:.72rem">${x.firstRbi||"-"}</td><td style="font-size:.72rem">${x.firstReach||"-"}</td><td style="font-size:.72rem">${x.firstRun||"-"}</td></tr>`;});
-    h+='</tbody></table>';
+    const md=s=>{const p=String(s||"").split("/");return p.length<3?(s?s:"-"):(parseInt(p[1],10)+"/"+parseInt(p[2],10));};
+    h+='<div style="overflow-x:auto"><table><thead><tr><th>児童</th><th>安打</th><th>打点</th><th>出塁</th><th>得点</th></tr></thead><tbody>';
+    a.firsts.forEach(x=>{h+=`<tr><td>${x.child}</td><td style="font-size:.74rem;white-space:nowrap">${md(x.firstHit)}</td><td style="font-size:.74rem;white-space:nowrap">${md(x.firstRbi)}</td><td style="font-size:.74rem;white-space:nowrap">${md(x.firstReach)}</td><td style="font-size:.74rem;white-space:nowrap">${md(x.firstRun)}</td></tr>`;});
+    h+='</tbody></table></div><p class="note" style="margin-top:4px">日付は月/日表示。「初安打／初打点／初出塁／初得点」の達成日です。</p>';
   }else{h+='<div class="note">データがまだありません。</div>';}
   // まだ賞のない子（手動賞で拾う対象）
   h+='<div style="font-weight:800;margin:18px 0 8px;color:#d64545;">■ まだデータ賞のない子（手動の一人一賞で拾う対象）</div>';
@@ -843,13 +848,14 @@ function renderGameReview(){
   const el=document.getElementById("gameReviewBody");
   if(!recs.length){el.innerHTML='<div class="loading">この試合の打撃データはまだありません。</div>';return;}
   const td={daseki:0,anda:0,daten:0,tokuten:0,shutsurui:0};
-  let h='<table><thead><tr><th>児童</th><th>打席</th><th>安打</th><th>打点</th><th>得点</th><th>出塁</th><th>守備</th><th>出場</th></tr></thead><tbody>';
+  let h='<table><thead><tr><th>児童</th><th>打席</th><th>安打</th><th>打点</th><th>得点</th><th>出塁</th><th>守備/出場</th></tr></thead><tbody>';
   recs.forEach(r=>{
     td.daseki+=Number(r.daseki)||0;td.anda+=Number(r.anda)||0;td.daten+=Number(r.daten)||0;td.tokuten+=Number(r.tokuten)||0;td.shutsurui+=Number(r.shutsurui)||0;
+    const firstPos=String(r.positions||"").split("・").filter(x=>x)[0]||"-";  // 最初に記録された守備位置のみ
     h+='<tr><td>'+esc(r.child)+'</td><td>'+(r.daseki||0)+'</td><td>'+(r.anda||0)+'</td><td>'+(r.daten||0)+'</td><td>'+(r.tokuten||0)+'</td><td>'+(r.shutsurui||0)+'</td>'
-      +'<td style="font-size:.7rem">'+esc(r.positions||"")+'</td><td style="font-size:.7rem">'+esc(r.start||"")+'</td></tr>';
+      +'<td style="font-size:.7rem;line-height:1.3;white-space:nowrap">'+esc(firstPos)+'<br>'+esc(r.start||"")+'</td></tr>';
   });
-  h+='</tbody><tfoot><tr><td>チーム合計</td><td>'+td.daseki+'</td><td>'+td.anda+'</td><td>'+td.daten+'</td><td>'+td.tokuten+'</td><td>'+td.shutsurui+'</td><td></td><td></td></tr></tfoot></table>';
+  h+='</tbody><tfoot><tr><td>チーム合計</td><td>'+td.daseki+'</td><td>'+td.anda+'</td><td>'+td.daten+'</td><td>'+td.tokuten+'</td><td>'+td.shutsurui+'</td><td></td></tr></tfoot></table>';
   el.innerHTML=h;
 }
 document.getElementById("gameReviewSel").onchange=renderGameReview;
