@@ -406,7 +406,7 @@ function renderGameList(games){
   games.forEach(g=>{const col=g.result==="〇"?"var(--green)":g.result==="●"?"var(--red)":"var(--muted)";
     const pitch=g.pitch?(g.pitch==="ティー試合"?"ティー":g.pitch==="投げ試合"?"投げ":g.pitch):"-";
     html+=`<tr><td style="white-space:nowrap">${mmdd(g.date)}</td><td>${g.kind}</td><td style="font-size:.78rem">${pitch}</td><td>${g.opp}</td><td style="white-space:nowrap;font-weight:700">${g.us}-${g.them}</td><td style="font-weight:800;color:${col}">${g.result}</td>`+
-      `<td style="white-space:nowrap"><button class="rowbtn edit" onclick="editGame('${g.ts}')">修正</button><button class="rowbtn del" onclick="delGame('${g.ts}')">削除</button></td></tr>`;});
+      `<td><div style="display:flex;flex-direction:column;gap:5px;align-items:stretch"><button class="rowbtn edit" style="margin:0" onclick="editGame('${g.ts}')">修正</button><button class="rowbtn del" style="margin:0" onclick="delGame('${g.ts}')">削除</button></div></td></tr>`;});
   html+='</tbody></table>';document.getElementById("gameList").innerHTML=html;
 }
 
