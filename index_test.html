@@ -321,7 +321,7 @@ async function delGame(ts){
 /* ---- データ取得 ---- */
 async function init(){
   try{
-    const res=await fetch(GAS_URL);const d=await res.json();
+    const res=await fetch(GAS_URL+"?view=init");const d=await res.json();
     CHILDREN=d.roster||[];YEARS=d.years||[];CUR_YEAR=d.currentYear||YEARS[0];GAME_DATES=d.gameDates||[];
     buildRoles();fillDateSelect();
     [document.getElementById("coopYear"),document.getElementById("gameYear")].forEach(sel=>{

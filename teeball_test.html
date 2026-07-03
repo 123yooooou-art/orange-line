@@ -523,7 +523,7 @@ async function delTeeball(ts){
 /* 初期化 */
 async function init(){
   try{
-    const res=await fetch(GAS_URL);const d=await res.json();
+    const res=await fetch(GAS_URL+"?view=init");const d=await res.json();
     CHILDREN=d.roster||[];GAME_DATES=d.gameDates||[];YEARS=d.years||[];CUR_YEAR=d.currentYear||YEARS[0];
     childSel.innerHTML="";CHILDREN.forEach(c=>{const o=document.createElement("option");o.value=c;o.textContent=c;childSel.appendChild(o);});
     fillDates();
