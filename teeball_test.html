@@ -705,7 +705,7 @@ function renderCeremony(a){
     if(best){assignedChildren[best.child]=true;assignList.push({child:best.child,name:def.name,value:def.fmt?def.fmt(bestVal,TOTAL_GAMES):bestVal});}
   });
 
-  h+='<div class="cer-section">🏅 みんなの表彰（1人1賞）<span class="bar"></span></div>';
+  h+='<div class="cer-section">🏅 みんなの表彰 🏅 みんなすごい！ <span class="bar"></span></div>';
   if(assignList.length||manual.length){
     h+='<div class="award-grid">';
     assignList.forEach(function(x){
@@ -750,11 +750,11 @@ function renderCeremony(a){
   /* 手動の一人一賞：データ賞が当たらなかった子に付ける（1人1賞） */
   const noAward=(typeof CHILDREN!=="undefined"?CHILDREN:[]).filter(function(c){return !assignedChildren[c];});
   const stillNone=noAward.filter(function(c){return !manualSet[c];});
-  h+='<div class="cer-section">🎁 手動の一人一賞を追加<span class="bar"></span></div>';
-  h+='<p class="note" style="margin:0 0 8px">表彰は1人1つ。データ賞が当たらなかった子を、手動賞で拾えます。</p>';
+  h+='<div class="cer-section">🎁 手動の1人1賞を追加<span class="bar"></span></div>';
+  h+='<p class="note" style="margin:0 0 8px">表彰は1人1つ。賞がない子は、手動賞で表彰。みんな特別！</p>';
   if(stillNone.length){
     h+='<div class="cer-empty" style="border-style:solid;border-color:#ffd2b3;background:#fff7f0;color:#9a4a1a;text-align:left">'
-      +'<b>まだ一賞のない子</b>（手動賞で拾いましょう）：<br>'+esc(stillNone.join("、"))+'</div>';
+      +'<b>まだ賞のない子</b>（手動賞を設定しましょう）：<br>'+esc(stillNone.join("、"))+'</div>';
   }else if(noAward.length){
     h+='<div class="cer-empty" style="background:#eafff3;color:#0f7a47;border-color:#bff0d4">データ賞のない子にも全員、手動賞が行き渡りました 🎊</div>';
   }else{
