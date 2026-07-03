@@ -548,13 +548,15 @@ async function loadCheck(){
     const d=await res.json();renderCheck(d.teeball||[]);
   }catch(e){el.innerHTML='<div class="loading">取得できませんでした。</div>';}
 }
+/* 表示専用：yyyy/MM/dd → M/D（内部の年・年度処理は変更しない） */
+function mmdd(dateStr){const p=String(dateStr||"").split("/");if(p.length<3)return dateStr||"";return parseInt(p[1],10)+"/"+parseInt(p[2],10);}
 function renderCheck(rows){
   CHECK_CACHE=rows||[];
   if(!rows.length){document.getElementById("checkList").innerHTML='<div class="loading">この年度の入力データはまだありません。</div>';return;}
   let h='<table><thead><tr><th>試合日</th><th>児童</th><th>打席</th><th>安打</th><th>打点</th><th>得点</th><th>出塁</th><th>代打</th><th>守備</th><th>出場</th><th>評価</th><th>操作</th></tr></thead><tbody>';
   rows.forEach(r=>{
-    h+=`<tr><td>${r.date}</td><td>${r.child}</td><td>${r.daseki}</td><td>${r.anda}</td><td>${r.daten}</td><td>${r.tokuten}</td><td>${r.shutsurui}</td><td>${r.daida}</td><td style="font-size:.72rem">${r.positions||""}</td><td style="font-size:.72rem">${r.start||""}</td><td>${r.play||""}</td>`+
-      `<td style="white-space:nowrap"><button class="rowbtn edit" onclick="editTeeball('${r.ts}')">修正</button><button class="rowbtn del" onclick="delTeeball('${r.ts}')">削除</button></td></tr>`;
+    h+=`<tr><td style="white-space:nowrap">${mmdd(r.date)}</td><td>${r.child}</td><td>${r.daseki}</td><td>${r.anda}</td><td>${r.daten}</td><td>${r.tokuten}</td><td>${r.shutsurui}</td><td>${r.daida}</td><td style="font-size:.72rem">${r.positions||""}</td><td style="font-size:.72rem">${r.start||""}</td><td>${r.play||""}</td>`+
+      `<td><div style="display:flex;flex-direction:column;gap:5px;align-items:stretch"><button class="rowbtn edit" style="margin:0" onclick="editTeeball('${r.ts}')">修正</button><button class="rowbtn del" style="margin:0" onclick="delTeeball('${r.ts}')">削除</button></div></td></tr>`;
   });
   h+='</tbody></table>';
   document.getElementById("checkList").innerHTML=h;
