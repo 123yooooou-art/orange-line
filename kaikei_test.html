@@ -289,7 +289,7 @@ async function init(){
     document.getElementById("evBadge").textContent=EVENT?("🎉 "+EVENT):"（イベント未設定）";
     const pu=Number(d.present)||0;
     const pn=document.getElementById("presentNote");
-    if(pu>0){pn.style.display="block";pn.textContent="🎁 この会は子ども1人あたり プレゼント代 "+pu.toLocaleString()+"円 がかかります（メニュー代とは別に加算されます）。";}
+    if(pu>0){pn.style.display="block";pn.textContent="🎁 この会は子ども1人あたり お菓子代 "+pu.toLocaleString()+"円 がかかります（メニュー代とは別に加算されます）。";}
     else{pn.style.display="none";}
     buildNameSelect();
     if(!MENU_ITEMS.length){document.getElementById("evBadge").textContent="（メニュー未設定：menuシートを設定してください）";}
@@ -358,7 +358,7 @@ function renderKaikei(k){
     +'<div class="k-stat"><div class="lbl">集金済み</div><div class="val paid-yes">'+(s.paid||0).toLocaleString()+' 円</div></div>'
     +'<div class="k-stat"><div class="lbl">未集金</div><div class="val paid-no">'+(s.unpaid||0).toLocaleString()+' 円</div></div>'
     +'</div>'
-    +((k.presentUnit||0)>0?'<div class="note" style="margin-top:8px">内訳：メニュー代 '+(s.menu||0).toLocaleString()+'円 ＋ 🎁プレゼント代 '+(s.present||0).toLocaleString()+'円（'+(k.presentUnit).toLocaleString()+'円×子ども'+(s.child||0)+'人）</div>':'')
+    +((k.presentUnit||0)>0?'<div class="note" style="margin-top:8px">内訳：メニュー代 '+(s.menu||0).toLocaleString()+'円 ＋ 🎁お菓子代 '+(s.present||0).toLocaleString()+'円（'+(k.presentUnit).toLocaleString()+'円×子ども'+(s.child||0)+'人）</div>':'')
     +((s.unpaidNames&&s.unpaidNames.length)?'<div class="unpaid-box">未払い：'+s.unpaidNames.map(esc).join("、")+'</div>':'');
 
   // 注文集計（発注用）
@@ -379,7 +379,7 @@ function renderKaikei(k){
       const agg={},order=[];
       (f.items||[]).forEach(it=>{const m=esc(it.menu);if(!agg[m]){agg[m]=0;order.push(m);}agg[m]++;});
       let menuHtml=order.length?order.map(m=>'<div class="fm-item">'+m+' ×'+agg[m]+'</div>').join(""):'<div class="fm-item" style="color:var(--muted)">（メニューなし）</div>';
-      if((f.present||0)>0)menuHtml+='<div class="fm-pres">🎁 プレゼント代 '+(f.present||0).toLocaleString()+'円（子ども'+f.child+'人）</div>';
+      if((f.present||0)>0)menuHtml+='<div class="fm-pres">🎁 お菓子代 '+(f.present||0).toLocaleString()+'円（子ども'+f.child+'人）</div>';
       const brk=(f.present||0)>0?'<span class="fc-brk">(ﾒﾆｭｰ'+(f.menuTotal||0).toLocaleString()+'＋ﾌﾟﾚ'+(f.present||0).toLocaleString()+')</span>':'';
       h+='<div class="fcard"><div class="fc-top"><span class="fc-name">'+esc(f.name)+'</span>'
         +'<span>'+(f.paid?'<span class="paid-yes">済</span>':'<span class="paid-no">未</span>')+'</span></div>'
