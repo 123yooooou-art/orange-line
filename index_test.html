@@ -201,6 +201,18 @@ document.querySelectorAll(".tab").forEach(t=>{
 });
 function toast(msg,isErr){const t=document.getElementById("toast");t.textContent=msg;t.className="toast show"+(isErr?" err":"");setTimeout(()=>t.className="toast",1800);}
 
+/* ===== フロント メモリキャッシュ（同一URLは一定時間 再取得しない。書き込みで全クリア、↻でfresh） ===== */
+const _mem={}; const MEM_TTL=60000;
+async function cachedGet(url,fresh){
+  const now=Date.now();
+  if(!fresh){const c=_mem[url];if(c&&now-c.t<MEM_TTL)return JSON.parse(c.s);}
+  const u=fresh?(url+(url.indexOf('?')>=0?'&':'?')+'fresh=1'):url;
+  const s=await (await fetch(u)).text();
+  _mem[url]={t:now,s:s};
+  return JSON.parse(s);
+}
+function clearMem(){for(const k in _mem)delete _mem[k];}
+
 /* ---- 一括入力フォーム生成 ---- */
 function buildRoles(){
   const wrap=document.getElementById("roles");wrap.innerHTML="";
@@ -245,7 +257,7 @@ document.getElementById("coopSubmit").onclick=async()=>{
   try{
     await fetch(GAS_URL,{method:"POST",body:JSON.stringify({type:"coopBatch",date:date,entries:entries})});
     toast(entries.length+"件を記録しました ✓");clearSelection();
-    setTimeout(loadCoopSummary,600);
+    clearMem();loadCoopSummary();
   }catch(e){toast("送信に失敗しました",true);}
   btn.textContent="＋ まとめて記録";updateSelSum();
 };
@@ -279,7 +291,7 @@ document.getElementById("gameSubmit").onclick=async()=>{
     document.getElementById("opp").value="";document.getElementById("us").value=0;document.getElementById("them").value=0;judge();
     document.querySelectorAll("#pitchKinds .kind-btn").forEach(x=>x.classList.remove("active"));selectedPitch="";
     cancelGameEdit();
-    setTimeout(()=>{loadGameList();refreshDates();},600);}catch(e){toast("送信に失敗しました",true);}
+    clearMem();loadGameList();refreshDates();}catch(e){toast("送信に失敗しました",true);}
   btn.textContent=editingGameTs?"✓ この内容で修正保存":"＋ この試合を記録";btn.disabled=false;
 };
 /* 試合の修正モード解除 */
@@ -314,14 +326,14 @@ async function delGame(ts){
   const g=GAMES_CACHE.find(x=>String(x.ts)===String(ts));if(!g)return;
   if(!confirm((g.date||"")+" vs "+(g.opp||"")+" の試合記録を削除します。よろしいですか？"))return;
   try{await fetch(GAS_URL,{method:"POST",body:JSON.stringify({type:"deleteRecord",sheet:"game",ts:ts})});
-    toast("削除しました");setTimeout(()=>{loadGameList();refreshDates();},600);
+    toast("削除しました");clearMem();loadGameList();refreshDates();
   }catch(e){toast("削除に失敗しました",true);}
 }
 
 /* ---- データ取得 ---- */
 async function init(){
   try{
-    const res=await fetch(GAS_URL+"?view=init");const d=await res.json();
+    const d=await cachedGet(GAS_URL+"?view=init");
     CHILDREN=d.roster||[];YEARS=d.years||[];CUR_YEAR=d.currentYear||YEARS[0];GAME_DATES=d.gameDates||[];
     buildRoles();fillDateSelect();
     [document.getElementById("coopYear"),document.getElementById("gameYear")].forEach(sel=>{
@@ -335,11 +347,11 @@ function fillDateSelect(){
   GAME_DATES.forEach(g=>{const o=document.createElement("option");o.value=g.date;o.textContent=g.date+"　vs "+g.opp;sel.appendChild(o);});
   sel.onchange=updateSelSum;
 }
-async function refreshDates(){
-  try{const res=await fetch(GAS_URL+"?view=dates");const d=await res.json();GAME_DATES=d.gameDates||[];fillDateSelect();updateSelSum();}catch(e){}
+async function refreshDates(fresh){
+  try{const d=await cachedGet(GAS_URL+"?view=dates",fresh);GAME_DATES=d.gameDates||[];fillDateSelect();updateSelSum();}catch(e){}
 }
-async function loadCoopSummary(){const el=document.getElementById("coopRank");el.innerHTML='<div class="loading">読み込み中…</div>';
-  try{const res=await fetch(GAS_URL+"?view=coop&year="+encodeURIComponent(document.getElementById("coopYear").value));const d=await res.json();renderCoop(d.coopSummary||{});renderCoopLog(d.coopLog||[]);}
+async function loadCoopSummary(fresh){const el=document.getElementById("coopRank");el.innerHTML='<div class="loading">読み込み中…</div>';
+  try{const d=await cachedGet(GAS_URL+"?view=coop&year="+encodeURIComponent(document.getElementById("coopYear").value),fresh);renderCoop(d.coopSummary||{});renderCoopLog(d.coopLog||[]);}
   catch(e){el.innerHTML='<div class="loading">取得できませんでした。</div>';}}
 /* 協力ログ明細（削除用） */
 function renderCoopLog(list){
@@ -353,17 +365,17 @@ async function delCoop(i){
   const r=COOPLOG_CACHE[i];if(!r)return;
   if(!confirm(r.date+"　"+r.child+"（"+r.task+"）の協力記録を削除します。よろしいですか？"))return;
   try{await fetch(GAS_URL,{method:"POST",body:JSON.stringify({type:"deleteRecord",sheet:"log",ts:r.ts,child:r.child,task:r.task})});
-    toast("削除しました");setTimeout(loadCoopSummary,600);
+    toast("削除しました");clearMem();loadCoopSummary();
   }catch(e){toast("削除に失敗しました",true);}
 }
-async function loadGameList(){const el=document.getElementById("gameList");el.innerHTML='<div class="loading">読み込み中…</div>';
-  try{const res=await fetch(GAS_URL+"?view=game&year="+encodeURIComponent(document.getElementById("gameYear").value));const d=await res.json();renderGameList(d.games||[]);}
+async function loadGameList(fresh){const el=document.getElementById("gameList");el.innerHTML='<div class="loading">読み込み中…</div>';
+  try{const d=await cachedGet(GAS_URL+"?view=game&year="+encodeURIComponent(document.getElementById("gameYear").value),fresh);renderGameList(d.games||[]);}
   catch(e){el.innerHTML='<div class="loading">取得できませんでした。</div>';}}
 
-document.getElementById("coopRefresh").onclick=loadCoopSummary;
-document.getElementById("coopYear").onchange=loadCoopSummary;
-document.getElementById("gameRefresh").onclick=loadGameList;
-document.getElementById("gameYear").onchange=loadGameList;
+document.getElementById("coopRefresh").onclick=()=>loadCoopSummary(true);
+document.getElementById("coopYear").onchange=()=>loadCoopSummary();
+document.getElementById("gameRefresh").onclick=()=>loadGameList(true);
+document.getElementById("gameYear").onchange=()=>loadGameList();
 
 /* ---- 描画：協力集計（名簿順固定＋バー＋表） ---- */
 function renderCoop(data){

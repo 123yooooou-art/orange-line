@@ -165,6 +165,18 @@ const adultCountSel=document.getElementById("adultCount");
 
 function toast(msg,isErr){const t=document.getElementById("toast");t.textContent=msg;t.className="toast show"+(isErr?" err":"");setTimeout(()=>t.className="toast",1900);}
 
+/* ===== フロント メモリキャッシュ（同一URLは一定時間 再取得しない。書き込みで全クリア、↻でfresh） ===== */
+const _mem={}; const MEM_TTL=60000;
+async function cachedGet(url,fresh){
+  const now=Date.now();
+  if(!fresh){const c=_mem[url];if(c&&now-c.t<MEM_TTL)return JSON.parse(c.s);}
+  const u=fresh?(url+(url.indexOf('?')>=0?'&':'?')+'fresh=1'):url;
+  const s=await (await fetch(u)).text();
+  _mem[url]={t:now,s:s};
+  return JSON.parse(s);
+}
+function clearMem(){for(const k in _mem)delete _mem[k];}
+
 /* タブ切り替え */
 document.querySelectorAll(".tab").forEach(t=>{
   t.onclick=()=>{
@@ -258,7 +270,7 @@ document.getElementById("submit").onclick=async()=>{
     childCountSel.value=0;adultCountSel.value=0;
     renderMenus("childMenus",0,CHILD_MENUS,"お子さん");renderMenus("adultMenus",0,ADULT_MENUS,"大人");
     updateAll();
-    setTimeout(()=>loadKaikei(),600); // 確認・会計を最新化
+    clearMem();loadKaikei(); // 確認・会計を最新化（書き込み直後は待ち不要）
   }catch(e){toast("送信に失敗しました",true);}
   btn.textContent="この注文を登録";updateSubmit();
 };
@@ -267,7 +279,9 @@ document.getElementById("submit").onclick=async()=>{
 async function init(){
   fillCount(childCountSel);fillCount(adultCountSel);
   try{
-    const res=await fetch(GAS_URL+"?view=menu");const d=await res.json();
+    const menuP=cachedGet(GAS_URL+"?view=menu"); // menuと会計を並列取得（初期表示を短縮）
+    const kaikeiP=loadKaikei();
+    const d=await menuP;
     CHILDREN=d.roster||[];STAFF=d.staff||[];EVENT=d.event||"";MENU_ITEMS=d.menu||[];
     CHILD_MENUS=MENU_ITEMS.filter(m=>m.seg==="子ども");
     ADULT_MENUS=MENU_ITEMS.filter(m=>m.seg==="大人");
@@ -280,7 +294,7 @@ async function init(){
     buildNameSelect();
     if(!MENU_ITEMS.length){document.getElementById("evBadge").textContent="（メニュー未設定：menuシートを設定してください）";}
     updateAll();
-    loadKaikei();
+    await kaikeiP; // 並列で走らせた会計取得の完了を待つ
   }catch(e){
     document.getElementById("evBadge").textContent="取得に失敗。GAS_URLを確認してください。";
     toast("データ取得に失敗しました",true);
@@ -288,9 +302,9 @@ async function init(){
 }
 
 /* ===== 会計データの取得＋確認/会計の描画 ===== */
-async function loadKaikei(){
+async function loadKaikei(fresh){
   try{
-    const res=await fetch(GAS_URL+"?view=kaikei");const d=await res.json();
+    const d=await cachedGet(GAS_URL+"?view=kaikei",fresh);
     const k=d.kaikei||{families:[],menu:[],summary:{}};
     ORDERS_BY_NAME={};(k.families||[]).forEach(f=>{ORDERS_BY_NAME[f.name]=f;});
     showCurrentOrder();
@@ -376,7 +390,7 @@ function renderKaikei(k){
     document.getElementById("kFamilies").innerHTML=h;
   }else{document.getElementById("kFamilies").innerHTML='<div class="loading">まだ注文がありません。</div>';}
 }
-document.getElementById("kRefresh").onclick=loadKaikei;
+document.getElementById("kRefresh").onclick=()=>loadKaikei(true);
 
 init();
 </script>

@@ -84,10 +84,22 @@ let EVENT="";
 function esc(s){return String(s==null?"":s).replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]));}
 function toast(msg,isErr){const t=document.getElementById("toast");t.textContent=msg;t.className="toast show"+(isErr?" err":"");setTimeout(()=>t.className="toast",1800);}
 
-async function load(){
+/* ===== フロント メモリキャッシュ（同一URLは一定時間 再取得しない。書き込みで全クリア、↻でfresh） ===== */
+const _mem={}; const MEM_TTL=60000;
+async function cachedGet(url,fresh){
+  const now=Date.now();
+  if(!fresh){const c=_mem[url];if(c&&now-c.t<MEM_TTL)return JSON.parse(c.s);}
+  const u=fresh?(url+(url.indexOf('?')>=0?'&':'?')+'fresh=1'):url;
+  const s=await (await fetch(u)).text();
+  _mem[url]={t:now,s:s};
+  return JSON.parse(s);
+}
+function clearMem(){for(const k in _mem)delete _mem[k];}
+
+async function load(fresh){
   document.getElementById("kFamilies").innerHTML='<div class="loading">読み込み中…</div>';
   try{
-    const res=await fetch(GAS_URL+"?view=kaikei");const d=await res.json();
+    const d=await cachedGet(GAS_URL+"?view=kaikei",fresh);
     render(d.kaikei||{families:[],summary:{}});
   }catch(e){document.getElementById("kFamilies").innerHTML='<div class="loading">取得できませんでした。GAS_URLを確認してください。</div>';}
 }
@@ -133,11 +145,11 @@ async function togglePaid(name,current,btn){
   try{
     await fetch(GAS_URL,{method:"POST",body:JSON.stringify({type:"setPaid",event:EVENT,name:name,paid:next})});
     toast(name+" を「"+(next?"済":"未")+"」にしました");
-    setTimeout(load,500);
+    clearMem();load();
   }catch(e){toast("更新に失敗しました",true);btn.disabled=false;btn.textContent=current?"済":"未";}
 }
 
-document.getElementById("kRefresh").onclick=load;
+document.getElementById("kRefresh").onclick=()=>load(true);
 load();
 </script>
 </body>
